@@ -183,7 +183,9 @@ class AtraccionEsperaAdapter(
             })
 
 
+        val idGenerado = BD2.push().key
         val map2: MutableMap<String, Any> = HashMap()
+        map2["id"] = idGenerado.toString()
         map2["turno"] = LTurno.TurnoAsignado ?: ""
         map2["nombre"] = LTurno.Atraccion ?: ""
         map2["tiempo"] = LTurno.Tiempo ?: ""
@@ -196,11 +198,10 @@ class AtraccionEsperaAdapter(
 
             builder.setPositiveButton("Aceptar") { dialog, _ ->
                 BD3.child(LTurno.Atraccion.toString()).child(key).removeValue()
-                BD2.child(LTurno.Atraccion.toString())
-                    .setValue(map2)
+
+                BD2.child(idGenerado.toString()).setValue(map2)
                     .addOnSuccessListener {
-                        BDTurnosEspera.child(LTurno.Atraccion.toString())
-                            .child(LTurno.Id.toString())
+                        BDTurnosEspera.child(LTurno.Id.toString())
                             .removeValue()
                         BD.child(key).removeValue()
                         Toast.makeText(

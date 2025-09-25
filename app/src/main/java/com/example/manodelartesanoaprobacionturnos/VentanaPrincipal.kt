@@ -95,7 +95,6 @@ class VentanaPrincipal : AppCompatActivity() {
                         RevTurnosEspera.visibility = View.GONE
 
                         FirebaseDatabase.getInstance().reference.child("TurnosEnEspera")
-                            .child(NombreAtraccion)
                             .addValueEventListener(object : ValueEventListener {
                                 override fun onDataChange(snapshot: DataSnapshot) {
                                     listaAtraccionesEspera.clear()

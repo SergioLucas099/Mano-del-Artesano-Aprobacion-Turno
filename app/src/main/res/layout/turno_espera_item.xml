@@ -136,7 +136,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:text="00:00"
-            android:textSize="25sp"
+            android:textSize="20sp"
             android:textColor="@color/white"/>
 
     </LinearLayout>

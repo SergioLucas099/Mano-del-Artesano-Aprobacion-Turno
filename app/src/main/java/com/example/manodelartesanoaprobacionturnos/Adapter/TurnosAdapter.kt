@@ -34,7 +34,7 @@ class TurnosAdapter (
 
         val dbRef = FirebaseDatabase.getInstance()
             .getReference("turnos")
-            .child(Lturno.nombre ?: "Desconocido")
+            .child(Lturno.id.toString())
 
         holder.txtEstadoTurno.setText(estado)
         holder.txtTiempoTurno.setText(tiempo)
