@@ -25,7 +25,7 @@
             android:src="@drawable/tiempo" />
 
         <TextView
-            android:id="@+id/tiempoTurno"
+            android:id="@+id/tiempoTurnoCan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -36,7 +36,7 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tiempoEspera"
+            android:id="@+id/tiempoEsperaCan"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone" />
@@ -59,7 +59,7 @@
             android:src="@drawable/usuario" />
 
         <TextView
-            android:id="@+id/personasTurno"
+            android:id="@+id/personasTurnoCan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -72,11 +72,11 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/VerificarInfoTurno"
+        android:id="@+id/VerificarInfoTurnoCan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -88,7 +88,7 @@
             android:src="@drawable/outline_assignment_24"/>
 
         <TextView
-            android:id="@+id/TurnoAsignado"
+            android:id="@+id/TurnoAsignadoCan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
@@ -111,61 +111,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!--Cancelar Turno (Izquierda)-->
+
+        <!--Devolver Turno-->
         <ImageView
-            android:id="@+id/EliminarTurno"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_gravity="start|center_vertical"
-            android:src="@drawable/eliminar" />
-
-        <!--Llamar Turno (Centro)-->
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_gravity="center">
-
-            <TextView
-                android:id="@+id/TextViewTiempoEsperaLLamado"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00:00"
-                android:textColor="@color/white"
-                android:textSize="20sp"/>
-
-            <androidx.coordinatorlayout.widget.CoordinatorLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/LlamarTurno"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:src="@drawable/llamada" />
-
-                <ImageView
-                    android:id="@+id/CancelarTurno"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:src="@drawable/cancelar_llamada"
-                    android:visibility="invisible"
-                    app:layout_anchor="@+id/LlamarTurno" />
-
-            </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-        </LinearLayout>
-
-        <!--Aprobar Turno (Derecha)-->
-        <ImageView
-            android:id="@+id/AceptarTurno"
+            android:id="@+id/DevolverTurnoCan"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_weight="1"
             android:layout_gravity="end|center_vertical"
-            android:src="@drawable/verificado" />
+            android:src="@drawable/regreso" />
 
     </LinearLayout>
 

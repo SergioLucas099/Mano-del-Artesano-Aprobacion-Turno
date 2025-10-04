@@ -1,6 +1,6 @@
 package com.example.manodelartesanoaprobacionturnos.Model
 
-class AtraccionEsperaModel (
+class AtraccionCanceladosModel (
     var Atraccion: String? = null,
     var Estado: String? = null,
     var Id: String? = null,

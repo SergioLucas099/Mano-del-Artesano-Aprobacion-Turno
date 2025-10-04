@@ -15,6 +15,7 @@ import com.example.manodelartesanoaprobacionturnos.Model.AtraccionEsperaModel
 import com.example.manodelartesanoaprobacionturnos.R
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
@@ -30,11 +31,11 @@ class AtraccionEsperaAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val LTurno = atraccionLista[position]
-        val BDTurnosEspera = FirebaseDatabase.getInstance().getReference("TurnosEnEspera")
+        val BDTurnosAcumulados = FirebaseDatabase.getInstance().getReference("TurnosAcumulados")
         var countDownTimer: CountDownTimer? = null
-        val BD = FirebaseDatabase.getInstance().getReference("LlamandoTurno")
-        val BD2 = FirebaseDatabase.getInstance().getReference("turnos")
-        val BD3 = FirebaseDatabase.getInstance().getReference("DatosLlamadoTurno")
+        val BDLlamandoTurno = FirebaseDatabase.getInstance().getReference("LlamandoTurno")
+        val BDTurnos = FirebaseDatabase.getInstance().getReference("turnos")
+        val BDDatosLlamadoTurno = FirebaseDatabase.getInstance().getReference("DatosLlamadoTurno")
 
         var TiempoEsperaLlamado = "01:00"
         var estadoBotonLlamar = "On"      // Llamar activo
@@ -47,7 +48,7 @@ class AtraccionEsperaAdapter(
             mapLlamado["BotonCancelar"] = estadoBotonCancelar
             mapLlamado["Tiempo"] = TiempoEsperaLlamado
 
-            BD3.child(atraccion).child(key).setValue(mapLlamado)
+            BDDatosLlamadoTurno.child(atraccion).child(key).setValue(mapLlamado)
         }
 
         holder.tiempoTurno.text = LTurno.Tiempo
@@ -88,16 +89,13 @@ class AtraccionEsperaAdapter(
                     // acción si el usuario confirma
                     dialog.dismiss()
                 }
-                .setNegativeButton("Cancelar") { dialog, _ ->
-                    dialog.dismiss()
-                }
 
             val dialog = builder.create()
             dialog.show()
         }
 
         holder.LlamarTurno.setOnClickListener {
-            BD.child(key).setValue(map)
+            BDLlamandoTurno.child(key).setValue(map)
                 .addOnSuccessListener {
                     Toast.makeText(holder.itemView.context, "Llamando Turno...", Toast.LENGTH_SHORT).show()
 
@@ -125,7 +123,7 @@ class AtraccionEsperaAdapter(
                             TiempoEsperaLlamado = "00:00"
                             holder.TextViewTiempoEsperaLLamado.text = TiempoEsperaLlamado
 
-                            BD.child(key).removeValue()
+                            BDLlamandoTurno.child(key).removeValue()
 
                             estadoBotonLlamar = "On"
                             estadoBotonCancelar = "Off"
@@ -145,7 +143,7 @@ class AtraccionEsperaAdapter(
         }
 
         holder.CancelarTurno.setOnClickListener {
-            BD.child(key).removeValue()
+            BDLlamandoTurno.child(key).removeValue()
                 .addOnSuccessListener {
                     countDownTimer?.cancel()
                     TiempoEsperaLlamado = "01:00"
@@ -159,13 +157,14 @@ class AtraccionEsperaAdapter(
                     holder.CancelarTurno.visibility = View.INVISIBLE
 
                     Toast.makeText(holder.itemView.context, "Turno Cancelado...", Toast.LENGTH_SHORT).show()
+                    BDDatosLlamadoTurno.child(LTurno.Atraccion.toString()).child(key).removeValue()
                 }
                 .addOnFailureListener {
                     Toast.makeText(holder.itemView.context, "Error al cancelar el turno", Toast.LENGTH_SHORT).show()
                 }
         }
 
-        BD3.child(LTurno.Atraccion.toString()).child(key)
+        BDDatosLlamadoTurno.child(LTurno.Atraccion.toString()).child(key)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val estadoLlamar = snapshot.child("BotonLLamar").getValue(String::class.java) ?: "On"
@@ -183,7 +182,7 @@ class AtraccionEsperaAdapter(
             })
 
 
-        val idGenerado = BD2.push().key
+        val idGenerado = BDTurnos.push().key
         val map2: MutableMap<String, Any> = HashMap()
         map2["id"] = idGenerado.toString()
         map2["turno"] = LTurno.TurnoAsignado ?: ""
@@ -197,21 +196,51 @@ class AtraccionEsperaAdapter(
             builder.setMessage("Confirmar Ingreso Turno ${LTurno.TurnoAsignado}?")
 
             builder.setPositiveButton("Aceptar") { dialog, _ ->
-                BD3.child(LTurno.Atraccion.toString()).child(key).removeValue()
+                BDDatosLlamadoTurno.child(LTurno.Atraccion.toString()).child(key).removeValue()
 
-                BD2.child(idGenerado.toString()).setValue(map2)
+                BDTurnos.child(idGenerado.toString()).setValue(map2)
                     .addOnSuccessListener {
-                        BDTurnosEspera.child(LTurno.Id.toString())
-                            .removeValue()
-                        BD.child(key).removeValue()
-                        Toast.makeText(
-                            holder.itemView.context,
-                            "Turno Aceptado...",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        countDownTimer?.cancel() // 🔹 detiene la cuenta regresiva
-                        TiempoEsperaLlamado = "01:00" // 🔹 reinicia el tiempo
-                        holder.TextViewTiempoEsperaLLamado.visibility = View.INVISIBLE // 🔹 lo oculta
+                        BDTurnosAcumulados
+                            .child(LTurno.Id.toString())
+                            .child("Estado")
+                            .setValue("Finalizado")
+                            .addOnCompleteListener {
+                                Toast.makeText(
+                                    holder.itemView.context,
+                                    "Turno ${LTurno.TurnoAsignado} Recibido",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                        BDLlamandoTurno.child(key).removeValue()
+                        FirebaseDatabase.getInstance()
+                            .getReference("TurnosActualesAtracciones")
+                            .child("Mano Del Artesano")
+                            .setValue(LTurno.TurnoAsignado ?: "")
+
+                        // 🔹 Restar tiempo en TurnosAcumulados
+                        val tiempoARestar = convertirATiempoSegundos(LTurno.Tiempo.toString())
+                        val refTurnosAcumulados = FirebaseDatabase.getInstance().getReference("TurnosAcumulados")
+
+                        refTurnosAcumulados.get().addOnSuccessListener { snapshot ->
+                            if (snapshot.exists()) {
+                                for (child in snapshot.children) {
+                                    val tiempoStr = child.child("TiempoEspera").getValue(String::class.java) ?: "00:00"
+                                    val tiempoActual = convertirATiempoSegundos(tiempoStr)
+
+                                    // Resta el tiempo (evita negativos)
+                                    val nuevoTiempoSeg = (tiempoActual - tiempoARestar).coerceAtLeast(0)
+                                    val nuevoTiempoStr = convertirAStrTiempo(nuevoTiempoSeg)
+
+                                    // 🔹 Actualiza en Firebase
+                                    child.ref.child("TiempoEspera").setValue(nuevoTiempoStr)
+                                }
+                            }
+                        }
+
+                        countDownTimer?.cancel()
+                        TiempoEsperaLlamado = "01:00"
+                        holder.TextViewTiempoEsperaLLamado.visibility = View.INVISIBLE
                         holder.LlamarTurno.visibility = View.VISIBLE
                         holder.CancelarTurno.visibility = View.INVISIBLE
                     }
@@ -233,6 +262,78 @@ class AtraccionEsperaAdapter(
             dialog.show()
         }
 
+        holder.EliminarTurno.setOnClickListener {
+
+            val builder = AlertDialog.Builder(holder.itemView.context)
+            builder.setTitle("Advertencia")
+            builder.setMessage("Confirmar Cancelación Turno ${LTurno.TurnoAsignado}?")
+
+            builder.setPositiveButton("Aceptar") { dialog, _ ->
+
+                BDTurnosAcumulados
+                    .child(LTurno.Id.toString())
+                    .child("Estado")
+                    .setValue("Cancelado")
+                    .addOnCompleteListener {
+                        Toast.makeText(
+                            holder.itemView.context,
+                            "Turno ${LTurno.TurnoAsignado} cancelado",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        // 🔹 Restar tiempo en TurnosAcumulados
+                        val tiempoARestar = convertirATiempoSegundos(LTurno.Tiempo.toString())
+                        val refTurnosAcumulados = FirebaseDatabase.getInstance().getReference("TurnosAcumulados")
+
+                        refTurnosAcumulados.get().addOnSuccessListener { snapshot ->
+                            if (snapshot.exists()) {
+                                for (child in snapshot.children) {
+                                    val tiempoStr = child.child("TiempoEspera").getValue(String::class.java) ?: "00:00"
+                                    val tiempoActual = convertirATiempoSegundos(tiempoStr)
+
+                                    // Resta el tiempo (evita negativos)
+                                    val nuevoTiempoSeg = (tiempoActual - tiempoARestar).coerceAtLeast(0)
+                                    val nuevoTiempoStr = convertirAStrTiempo(nuevoTiempoSeg)
+
+                                    // 🔹 Actualiza en Firebase
+                                    child.ref.child("TiempoEspera").setValue(nuevoTiempoStr)
+                                }
+                            }
+                        }
+
+                        // 🔹 Restar tiempo en TiempoAcumulado (tabla independiente)
+                        val refTiempoAcum = FirebaseDatabase.getInstance().getReference("TiempoAcumulado")
+                        refTiempoAcum.get().addOnSuccessListener { snapshot ->
+                            if (snapshot.exists()) {
+                                val tiempoGlobalStr = snapshot.getValue(String::class.java) ?: "00:00"
+                                val tiempoGlobal = convertirATiempoSegundos(tiempoGlobalStr)
+
+                                val nuevoTiempoGlobal = (tiempoGlobal - tiempoARestar).coerceAtLeast(0)
+                                val nuevoTiempoGlobalStr = convertirAStrTiempo(nuevoTiempoGlobal)
+
+                                refTiempoAcum.setValue(nuevoTiempoGlobalStr)
+                            }
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(
+                            holder.itemView.context,
+                            "Error al cancelar turno",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                dialog.dismiss()
+            }
+
+            builder.setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+
+            val dialog = builder.create()
+            dialog.show()
+
+        }
     }
 
     override fun getItemCount(): Int = atraccionLista.size
@@ -246,6 +347,45 @@ class AtraccionEsperaAdapter(
         val LlamarTurno: ImageView = itemView.findViewById(R.id.LlamarTurno)
         val CancelarTurno: ImageView = itemView.findViewById(R.id.CancelarTurno)
         val AceptarTurno: ImageView = itemView.findViewById(R.id.AceptarTurno)
+        val EliminarTurno: ImageView = itemView.findViewById(R.id.EliminarTurno)
         val VerificarInfoTurno: LinearLayout = itemView.findViewById(R.id.VerificarInfoTurno)
+    }
+}
+
+// === Función utilitaria para convertir tiempo a segundos ===
+fun convertirATiempoSegundos(tiempo: String): Int {
+    val partes = tiempo.split(":")
+    val horas = partes.getOrNull(0)?.toIntOrNull() ?: 0
+    val minutos = partes.getOrNull(1)?.toIntOrNull() ?: 0
+    return horas * 60 + minutos
+}
+
+// === Función utilitaria para convertir segundos a formato HH:MM ===
+fun convertirAStrTiempo(segundos: Int): String {
+    val horas = segundos / 60
+    val minutos = segundos % 60
+    return String.format("%02d:%02d", horas, minutos)
+}
+
+// === Nueva función reutilizable para restar tiempo ===
+fun restarTiempoFirebase(ref: DatabaseReference, tiempoARestar: Int, esGlobal: Boolean = false) {
+    ref.get().addOnSuccessListener { snapshot ->
+        if (snapshot.exists()) {
+            if (esGlobal) {
+                // 🔹 Caso de un solo valor (ej: TiempoAcumulado)
+                val tiempoStr = snapshot.getValue(String::class.java) ?: "00:00"
+                val tiempoActual = convertirATiempoSegundos(tiempoStr)
+                val nuevoTiempo = (tiempoActual - tiempoARestar).coerceAtLeast(0)
+                ref.setValue(convertirAStrTiempo(nuevoTiempo))
+            } else {
+                // 🔹 Caso de lista (ej: TurnosAcumulados)
+                for (child in snapshot.children) {
+                    val tiempoStr = child.child("TiempoEspera").getValue(String::class.java) ?: "00:00"
+                    val tiempoActual = convertirATiempoSegundos(tiempoStr)
+                    val nuevoTiempo = (tiempoActual - tiempoARestar).coerceAtLeast(0)
+                    child.ref.child("TiempoEspera").setValue(convertirAStrTiempo(nuevoTiempo))
+                }
+            }
+        }
     }
 }
