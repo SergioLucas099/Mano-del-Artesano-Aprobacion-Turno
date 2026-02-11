@@ -1,6 +1,7 @@
 package com.example.manodelartesanoaprobacionturnos
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -114,6 +115,7 @@ class VentanaPrincipal : AppCompatActivity() {
                                         mostrarConTurnos()
 
                                         for (Snap in snapshot.children) {
+                                            Log.d("DEBUG_FIREBASE", "${Snap.key} = ${Snap.value} (${Snap.value!!::class.java})")
                                             val data = Snap.getValue(AtraccionEsperaModel::class.java)
                                             // 🔹 Verificamos que el estado sea "En Espera"
                                             if (data?.Estado == "En Espera") {
